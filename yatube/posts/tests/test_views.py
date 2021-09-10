@@ -5,7 +5,7 @@ from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django import forms
-from ..models import Group, Post, Follow
+from ..models import Group, Post, Follow, Comment
 from django.core.cache import cache
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -59,6 +59,19 @@ class PostPagesTest(TestCase):
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
+    def check_context(self, page):
+        """Метод для првоерки контекста вызываемой страницы."""
+        post_text_0 = page.text
+        post_author_0 = page.author.username
+        post_group_0 = page.group
+        post_pub_date_0 = page.pub_date
+        post_img = page.image
+        self.assertEqual(post_text_0, page.text)
+        self.assertEqual(post_author_0, page.author.username)
+        self.assertEqual(post_group_0, page.group)
+        self.assertEqual(post_pub_date_0, page.pub_date)
+        self.assertEqual(post_img, page.image)
+
     def test_pages_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
         templates_page_names = {
@@ -90,16 +103,8 @@ class PostPagesTest(TestCase):
         """Шаблон индекс сформирован с правильным контекстом."""
         response = self.guest_client.get(reverse('posts:index'))
         first_object = response.context['posts'][0]
-        post_text_0 = first_object.text
-        post_author_0 = first_object.author.username
-        post_group_0 = first_object.group
-        post_pub_date_0 = first_object.pub_date
-        post_img = first_object.image
-        self.assertEqual(post_text_0, PostPagesTest.post.text)
-        self.assertEqual(post_author_0, PostPagesTest.user.username)
-        self.assertEqual(post_group_0, PostPagesTest.post.group)
-        self.assertEqual(post_pub_date_0, PostPagesTest.post.pub_date)
-        self.assertEqual(post_img, PostPagesTest.post.image)
+        self.check_context(first_object)
+
 
     def test_group_list_context(self):
         """Шаблон group list сформирован с правильным контекстом."""
@@ -107,16 +112,7 @@ class PostPagesTest(TestCase):
             reverse('posts:group_list', kwargs={'slug': 'test-slug'})
         )
         first_object = response.context['page_obj'][0]
-        post_text_0 = first_object.text
-        post_author_0 = first_object.author.username
-        post_group_0 = first_object.group
-        post_pub_date_0 = first_object.pub_date
-        post_img = first_object.image
-        self.assertEqual(post_text_0, PostPagesTest.post.text)
-        self.assertEqual(post_author_0, PostPagesTest.user.username)
-        self.assertEqual(post_group_0, PostPagesTest.post.group)
-        self.assertEqual(post_img, PostPagesTest.post.image)
-        self.assertEqual(post_pub_date_0, PostPagesTest.post.pub_date)
+        self.check_context(first_object)
         self.assertEqual(
             response.context.get('group').title, 'Тестовая группа'
         )
@@ -130,16 +126,9 @@ class PostPagesTest(TestCase):
             reverse('posts:profile', kwargs={'username': 'auth'})
         )
         first_object = response.context['page_obj'][0]
-        post_text_0 = first_object.text
-        profile_img = first_object.image
-        self.assertEqual(profile_img, PostPagesTest.post.image)
-        self.assertEqual(post_text_0, PostPagesTest.post.text)
+        self.check_context(first_object)
         post_count = Post.objects.order_by('author').count()
-        self.assertEqual(response.context.get('post_count'), post_count)
-        self.assertEqual(
-            response.context.get('author').username,
-            PostPagesTest.user.username
-        )
+        self.assertEqual(response.context.get('post_list').count(), post_count)
 
     def test_post_detail_context(self):
         """Шаблон post detail с правильным контексом."""
@@ -149,16 +138,9 @@ class PostPagesTest(TestCase):
                 kwargs={'post_id': PostPagesTest.post.id}
             )
         )
-        profile_post = response.context['post'].text
-        profile_group = response.context['post'].group
-        profile_date = response.context['post'].pub_date
+        self.check_context(response.context['post'])
         profile_post_count = response.context['author_posts_count']
         post_count = Post.objects.order_by('author').count()
-        post_image = response.context['post'].image
-        self.assertEqual(post_image, PostPagesTest.post.image)
-        self.assertEqual(profile_post, PostPagesTest.post.text)
-        self.assertEqual(profile_group, PostPagesTest.post.group)
-        self.assertEqual(profile_date, PostPagesTest.post.pub_date)
         self.assertEqual(profile_post_count, post_count)
 
     def test_post_create_correct_context(self):
@@ -341,7 +323,39 @@ class TestCacheIndex(TestCase):
         first_render = response_1.content
         Post.objects.filter(text='test text').delete()
         response_2 = self.authorized_client.get(reverse('posts:index'))
-        self.assertEquals(first_render, response_2.content)
+        self.assertEqual(first_render, response_2.content)
         cache.clear()
         response_3 = self.authorized_client.get(reverse('posts:index'))
-        self.assertNotEquals(first_render, response_3.content)
+        self.assertNotEqual(first_render, response_3.content)
+
+class CommentTest(TestCase):
+    def setUp(self):
+        """Создаем пользователей."""
+        self.guest_client = Client()
+        self.authorized_client= Client()
+        self.user1 = User.objects.create_user(username='Thor')
+        self.authorized_client.force_login(self.user1)
+    
+    def test_unath_user_cant_comment(self):
+        self.post = Post.objects.create(
+            text='Text for test comment',
+            author=self.user1
+        )
+        unath_comment = self.guest_client.post(reverse('posts:add_comment',
+                                            kwargs={'post_id':self.post.pk}),
+                                            {'text': 'test_text'})
+        comment_obj = Comment.objects.filter(author=self.user1,
+                                             post=self.post.pk).count()
+        self.assertEqual(comment_obj, 0)
+    
+    def test_auth_user_can_comment(self):
+        self.post = Post.objects.create(
+            text='test auth user can comment',
+            author=self.user1
+        )
+        auth_comment=self.authorized_client.post(reverse('posts:add_comment',
+                                            kwargs={'post_id':self.post.pk}),
+                                            {'text': 'test_text_auth_user'})
+        comment_obj = Comment.objects.filter(author=self.user1,
+                                             post=self.post.pk).count()
+        self.assertEqual(comment_obj, 1)

@@ -43,12 +43,10 @@ def profile(request, username):
     paginator = Paginator(post_list, settings.PAGINATOR_OBJECTS_PER_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    post_count = post_list.count()
     following = Follow.objects.filter(user__username=request.user,
                                       author=user).exists()
     context = {
         'page_obj': page_obj,
-        'post_count': post_count,
         'author': user,
         'post_list': post_list,
         'following': following,
@@ -59,7 +57,7 @@ def profile(request, username):
 def post_detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     author_posts_count = Post.objects.filter(author_id=post.author_id).count()
-    title = post.text[:30]
+    title = str(post)
     form = CommentForm(request.POST or None)
     comments = post.comments.all()
     context = {
@@ -68,6 +66,7 @@ def post_detail(request, post_id):
         'title': title,
         'form': form,
         'comments': comments,
+        #'post_id':post.id,
     }
     return render(request, 'posts/post_detail.html', context)
 
@@ -109,9 +108,6 @@ def post_edit(request, post_id):
 def add_comment(request, post_id):
     post = get_object_or_404(Post, pk=post_id)
     form = CommentForm(request.POST or None)
-    if not form.is_valid():
-        return render(request, 'posts/create_post.html',
-                      {'form': form, 'username': request.user})
     if form.is_valid():
         comment = form.save(commit=False)
         comment.author = request.user
@@ -146,6 +142,7 @@ def profile_follow(request, username):
 @login_required
 def profile_unfollow(request, username):
     author = get_object_or_404(User, username=username)
-    if Follow.objects.filter(user=request.user, author=author):
-        Follow.objects.filter(user=request.user, author=author).delete()
+    follower = Follow.objects.filter(user=request.user, author=author)
+    if follower.exists():
+        follower.delete()
     return redirect('posts:profile', username=author.username)

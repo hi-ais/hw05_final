@@ -6,7 +6,7 @@
 {% block content %}
 {% load user_filters %}      
 <h1>Все посты пользователя {{ author.get_full_name }}</h1>
-<h3>Всего постов: {{post_count}} </h3>  
+<h3>Всего постов: {{post_list.count}} </h3>  
   {% if following %}
     <a
       class="btn btn-lg btn-light"
@@ -54,7 +54,5 @@
     {% if not forloop.last %}<hr>{% endif %}
   {% endfor %}
 <div class="mb-5">
-
-
 {% include 'includes/paginator.html' %}
 {% endblock %}

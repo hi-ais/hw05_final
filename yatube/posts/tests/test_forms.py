@@ -172,10 +172,37 @@ class PostCreateFormTests(TestCase):
         )
         self.assertEqual(Post.objects.count(), post_count + 1)
 
+
+class CommentFormTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        """Запись в базу данных."""
+        super().setUpClass()
+        cls.user = User.objects.create_user(username='Myname')
+        cls.group = Group.objects.create(
+            title='Тестовая группа',
+            slug='test-slug_1',
+            description='Тестовое описание',
+        )
+        cls.post = Post.objects.create(
+            text='Тестовый текст',
+            author=cls.user,
+            group=cls.group,
+        )
+        cls.comment = Comment.objects.create(
+            post=cls.post,
+            author=cls.user,
+            text='новый коммент',
+        )
+
+    def setUp(self):
+        self.guest_client = Client()
+        self.user_1 = User.objects.create_user(username='StasBasov')
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.user_1)   
+
     def test_comment_create_by_guest(self):
         """Незарег поль-ль не может написать коммент."""
-        # страницу редиректа взяла из кода ошибки,которая вылезла
-        # после проведения теста есть какой-то еще способ узнать куда редирект?
         redirect_page = '/auth/login/?next=/posts/1/comment'
         response = self.guest_client.get(
             reverse(
@@ -188,8 +215,8 @@ class PostCreateFormTests(TestCase):
     def test_comment_form(self):
         """При добавлении комента он появл на странице поста."""
         comment = {
-            'post': PostCreateFormTests.post,
-            'author': PostCreateFormTests.user,
+            'post': CommentFormTest.post,
+            'author': CommentFormTest.user,
             'text': 'Новый комментарий!!!!'
         }
         response = self.authorized_client.post(
@@ -204,7 +231,7 @@ class PostCreateFormTests(TestCase):
         comment_text = comment_1.text
         self.assertRedirects(response, reverse(
             'posts:post_detail',
-            kwargs={'post_id': PostCreateFormTests.post.id}
+            kwargs={'post_id': CommentFormTest.post.id}
         )
         )
-        self.assertEqual(comment_text, PostCreateFormTests.comment.text)
+        self.assertEqual(comment_text, CommentFormTest.comment.text)

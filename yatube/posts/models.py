@@ -75,6 +75,9 @@ class Comment(models.Model):
     text = models.TextField(verbose_name='Текст коммента')
     created = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        verbose_name_plural = 'Комментарии'
+
     def __str__(self):
         return self.text[:15]
 
@@ -90,3 +93,10 @@ class Follow(models.Model):
         related_name='following',
         on_delete=models.CASCADE
     )
+
+    class Meta:
+        verbose_name_plural = 'Подписки'
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'author'], name='unique_pare')
+            ,
+        ]
