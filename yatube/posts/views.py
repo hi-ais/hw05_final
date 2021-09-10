@@ -66,7 +66,6 @@ def post_detail(request, post_id):
         'title': title,
         'form': form,
         'comments': comments,
-        #'post_id':post.id,
     }
     return render(request, 'posts/post_detail.html', context)
 

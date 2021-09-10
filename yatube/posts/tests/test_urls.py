@@ -1,6 +1,6 @@
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
-from ..models import Group, Post, Comment, Follow
+from ..models import Group, Post
 from http import HTTPStatus
 from django.shortcuts import reverse
 
@@ -121,11 +121,12 @@ class CommentURLTest(TestCase):
         на страницу логина.
         """
         response = self.guest_client.post(reverse('posts:add_comment',
-                                            args={self.post.pk,}))
+                                          args={self.post.pk}))
         login_url = reverse('login')
         new_comment_url = reverse('posts:add_comment', args={self.post.pk})
         target_url = f'{login_url}?next={new_comment_url}'
-        self.assertRedirects(response,target_url)
+        self.assertRedirects(response, target_url)
+
 
 class FollowURLTest(TestCase):
     @classmethod
@@ -161,21 +162,33 @@ class FollowURLTest(TestCase):
         login_url = reverse('login')
         follow_url = reverse('posts:follow_index')
         target_url = f'{login_url}?next={follow_url}'
-        self.assertRedirects(response,target_url)
+        self.assertRedirects(response, target_url)
 
     def test_profile_follow_redirect_anonymous_on_admin_login(self):
-        response = self.guest_client.post(reverse('posts:profile_follow',kwargs={'username':self.user.username}))
+        response = self.guest_client.post(reverse(
+            'posts:profile_follow',
+            kwargs={'username': self.user.username})
+        )
         login_url = reverse('login')
-        follow_url = reverse('posts:profile_follow',kwargs={'username':self.user.username})
+        follow_url = reverse(
+            'posts:profile_follow',
+            kwargs={'username': self.user.username})
         target_url = f'{login_url}?next={follow_url}'
-        self.assertRedirects(response,target_url)
+        self.assertRedirects(response, target_url)
 
     def test_profile_unfollow_redirect_anonymous_on_admin_login(self):
-        response = self.guest_client.post(reverse('posts:profile_unfollow',kwargs={'username':self.user.username}))
+        response = self.guest_client.post(reverse(
+            'posts:profile_unfollow',
+            kwargs={'username': self.user.username})
+        )
         login_url = reverse('login')
-        unfollow_url = reverse('posts:profile_unfollow',kwargs={'username':self.user.username})
+        unfollow_url = reverse(
+            'posts:profile_unfollow',
+            kwargs={'username': self.user.username}
+        )
         target_url = f'{login_url}?next={unfollow_url}'
-        self.assertRedirects(response,target_url)
+        self.assertRedirects(response, target_url)
+
 
 class StaticURLTests(TestCase):
     def setUp(self):

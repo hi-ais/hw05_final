@@ -105,7 +105,6 @@ class PostPagesTest(TestCase):
         first_object = response.context['posts'][0]
         self.check_context(first_object)
 
-
     def test_group_list_context(self):
         """Шаблон group list сформирован с правильным контекстом."""
         response = self.guest_client.get(
@@ -328,34 +327,37 @@ class TestCacheIndex(TestCase):
         response_3 = self.authorized_client.get(reverse('posts:index'))
         self.assertNotEqual(first_render, response_3.content)
 
+
 class CommentTest(TestCase):
     def setUp(self):
         """Создаем пользователей."""
         self.guest_client = Client()
-        self.authorized_client= Client()
+        self.authorized_client = Client()
         self.user1 = User.objects.create_user(username='Thor')
         self.authorized_client.force_login(self.user1)
-    
+
     def test_unath_user_cant_comment(self):
         self.post = Post.objects.create(
             text='Text for test comment',
             author=self.user1
         )
-        unath_comment = self.guest_client.post(reverse('posts:add_comment',
-                                            kwargs={'post_id':self.post.pk}),
-                                            {'text': 'test_text'})
+        self.guest_client.post(reverse(
+            'posts:add_comment',
+            kwargs={'post_id': self.post.pk}),
+            {'text': 'test_text'})
         comment_obj = Comment.objects.filter(author=self.user1,
                                              post=self.post.pk).count()
         self.assertEqual(comment_obj, 0)
-    
+
     def test_auth_user_can_comment(self):
         self.post = Post.objects.create(
             text='test auth user can comment',
             author=self.user1
         )
-        auth_comment=self.authorized_client.post(reverse('posts:add_comment',
-                                            kwargs={'post_id':self.post.pk}),
-                                            {'text': 'test_text_auth_user'})
+        self.authorized_client.post(reverse(
+            'posts:add_comment',
+            kwargs={'post_id': self.post.pk}),
+            {'text': 'test_text_auth_user'})
         comment_obj = Comment.objects.filter(author=self.user1,
                                              post=self.post.pk).count()
         self.assertEqual(comment_obj, 1)
