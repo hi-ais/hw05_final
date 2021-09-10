@@ -38,9 +38,9 @@ class FollowAdmin(admin.ModelAdmin):
         'user',
         'author',
     )
+
+
 admin.site.register(Post, PostAdmin)
 admin.site.register(Group, GroupAdmin)
 admin.site.register(Comment, CommentAdmin)
 admin.site.register(Follow, FollowAdmin)
-
-

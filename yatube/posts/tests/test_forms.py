@@ -199,7 +199,7 @@ class CommentFormTest(TestCase):
         self.guest_client = Client()
         self.user_1 = User.objects.create_user(username='StasBasov')
         self.authorized_client = Client()
-        self.authorized_client.force_login(self.user_1)   
+        self.authorized_client.force_login(self.user_1)
 
     def test_comment_create_by_guest(self):
         """Незарег поль-ль не может написать коммент."""
