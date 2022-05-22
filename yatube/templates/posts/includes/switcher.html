@@ -3,6 +3,14 @@
     <ul class="nav nav-tabs">
       <li class="nav-item">
         <a 
+          class="nav-link"
+          href="{% url 'posts:profile' user.username %}"
+        >
+          Мои посты
+        </a>
+      </li>
+      <li class="nav-item">
+        <a 
           class="nav-link {% if index %}active{% endif %}"
           href="{% url 'posts:index' %}"
         >

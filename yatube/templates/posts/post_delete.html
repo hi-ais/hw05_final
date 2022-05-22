@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %} {{ title }} {% endblock %}
+{% block content %}
+{% load user_filters %}
+<div class="row">
+  <article class="col-12 col-md-9">
+  <p>
+    {{ text }}
+  </p>
+  </article>
+</div>
+  <a class="btn btn-primary" href="{% url 'posts:post_delete' post.pk %}">
+  удалить запись
+  </a>
+{% endblock %}

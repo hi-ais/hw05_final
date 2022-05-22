@@ -71,6 +71,18 @@ def post_detail(request, post_id):
 
 
 @login_required
+def post_delete(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    context = {
+        'title': 'Удаление записи',
+        'text': 'Запись удалена',
+    }
+    if post.author == request.user:
+        post.delete()
+    return render(request, 'posts/post_delete.html', context)
+
+
+@login_required
 def post_create(request):
     form = PostForm(request.POST, files=request.FILES or None)
     if request.method != 'POST':

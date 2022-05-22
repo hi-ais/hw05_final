@@ -40,7 +40,13 @@
             <a class="btn btn-primary" href="{% url 'posts:post_edit' post.pk %}">
               редактировать запись
             </a>
-            {% endif%}
+          {% endif%}
+          {% if post.author.get_full_name == user.get_full_name  %}
+            <a class="btn btn-primary" href="{% url 'posts:post_delete' post.pk %}">
+              удалить запись
+            </a>
+          {% endif%}
+
        
         </article>
       </div>
